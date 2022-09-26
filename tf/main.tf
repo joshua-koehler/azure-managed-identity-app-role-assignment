@@ -112,6 +112,7 @@ resource "azurerm_network_interface" "this" {
     name                          = "internal"
     subnet_id                     = azurerm_subnet.this.id
     private_ip_address_allocation = "Dynamic"
+    public_ip_address_id          = azurerm_public_ip.this.id
   }
 }
 
@@ -146,6 +147,13 @@ resource "azurerm_linux_virtual_machine" "this" {
     sku       = "18.04-LTS"
     version   = "latest"
   }
+}
+
+resource "azurerm_public_ip" "this" {
+  name                = "public_ip"
+  resource_group_name = azurerm_resource_group.this.name
+  location            = azurerm_resource_group.this.location
+  allocation_method   = "Static"
 }
 
 output public_ip_address {
