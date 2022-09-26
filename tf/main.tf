@@ -13,7 +13,7 @@ provider "azurerm" {
 
 resource "azurerm_resource_group" "this" {
   name     = "mitokentest"
-  location = "southcentralus"
+  location = "centralus"
 }
 
 resource "azurerm_user_assigned_identity" "this" {
@@ -23,6 +23,8 @@ resource "azurerm_user_assigned_identity" "this" {
 }
 
 data "azuread_client_config" "current" {}
+
+resource "random_uuid" "this" {}
 
 resource "azuread_application" "this" {
   display_name     = "myadapp"
@@ -48,11 +50,11 @@ resource "azuread_application" "this" {
 
   app_role {
     allowed_member_types = ["User", "Application"]
-    description          = "Have this permission to get a token - setup by Joshua"
-    display_name         = "JoshuasAppRole"
+    description          = "Set this up again because I couldn't tf import the other one"
+    display_name         = "Joshuas Second App Role"
     enabled              = true
-    id                   = "1c7c414c-04fb-4109-a2e1-53a4e4f81be0"
-    value                = "Joshua.Something"
+    id                   = random_uuid.this.result
+    value                = "Joshua.Something.Else"
   }
 
   feature_tags {
@@ -61,7 +63,6 @@ resource "azuread_application" "this" {
   }
 }
 
-# now add service principal
 resource "azuread_service_principal" "this" {
   application_id               = azuread_application.this.application_id
   app_role_assignment_required = false
@@ -74,14 +75,22 @@ resource "azuread_service_principal" "this" {
 }
 
 resource "azuread_app_role_assignment" "this" {
-  app_role_id         = azuread_service_principal.this.app_role_ids["Joshua.Something"]
+
+  app_role_id         = azuread_service_principal.this.app_role_ids["Joshua.Something.Else"]
   principal_object_id = azurerm_user_assigned_identity.this.principal_id
   resource_object_id  = azuread_service_principal.this.object_id
 }
 
-/*
+output "resource_object_id" {
+  value = azuread_service_principal.this.object_id
+}
+
+output "app_role_id" {
+  value = azuread_service_principal.this.app_role_ids["Joshua.Something.Else"]
+}
+
 resource "azurerm_virtual_network" "this" {
-  name                = "this-network"
+  name                = "network"
   address_space       = ["10.0.0.0/16"]
   location            = azurerm_resource_group.this.location
   resource_group_name = azurerm_resource_group.this.name
@@ -95,7 +104,7 @@ resource "azurerm_subnet" "this" {
 }
 
 resource "azurerm_network_interface" "this" {
-  name                = "this-nic"
+  name                = "nic"
   location            = azurerm_resource_group.this.location
   resource_group_name = azurerm_resource_group.this.name
 
@@ -110,7 +119,7 @@ resource "azurerm_linux_virtual_machine" "this" {
   name                = "machine"
   resource_group_name = azurerm_resource_group.this.name
   location            = azurerm_resource_group.this.location
-  size                = "Standard_B2ms"
+  size                = "Standard_D2_v2"
   admin_username      = "adminuser"
   network_interface_ids = [
     azurerm_network_interface.this.id,
@@ -128,14 +137,17 @@ resource "azurerm_linux_virtual_machine" "this" {
 
   identity {
     type = "UserAssigned"
-    identity_ids = ["/subscriptions/871d8e11-eea0-4735-b008-0b3194cb4416/resourcegroups/mitokentest/providers/Microsoft.ManagedIdentity/userAssignedIdentities/mitokentest"]
+    identity_ids = [azurerm_user_assigned_identity.this.id]
   }
 
   source_image_reference {
     publisher = "Canonical"
     offer     = "UbuntuServer"
-    sku       = "16.04-LTS"
+    sku       = "18.04-LTS"
     version   = "latest"
   }
 }
-*/
+
+output public_ip_address {
+  value = azurerm_linux_virtual_machine.this.public_ip_address
+}
