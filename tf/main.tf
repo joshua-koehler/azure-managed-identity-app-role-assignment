@@ -34,7 +34,7 @@ resource "azuread_application" "this" {
 
   api {
     mapped_claims_enabled          = true
-    requested_access_token_version = 1
+    requested_access_token_version = 2
 
     oauth2_permission_scope {
       admin_consent_description  = "Do everything"
@@ -72,6 +72,16 @@ resource "azuread_service_principal" "this" {
     enterprise = true
     gallery    = true
   }
+}
+
+resource "azuread_service_principal_password" "confidential" {
+  service_principal_id = azuread_service_principal.this.object_id
+}
+
+resource "azuread_user" "this" {
+  user_principal_name = "AnotherUser@joshuakoehler86gmail.onmicrosoft.com"
+  display_name        = "Another User"
+  password            = random_uuid.this.result
 }
 
 resource "azuread_app_role_assignment" "this" {
