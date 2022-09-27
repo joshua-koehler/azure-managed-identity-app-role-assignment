@@ -84,10 +84,20 @@ resource "azuread_user" "this" {
   password            = random_uuid.this.result
 }
 
-resource "azuread_app_role_assignment" "this" {
+output "user_password" {
+  value = azuread_user.this.password
+  sensitive = true
+}
 
+resource "azuread_app_role_assignment" "this" {
   app_role_id         = azuread_service_principal.this.app_role_ids["Joshua.Something.Else"]
   principal_object_id = azurerm_user_assigned_identity.this.principal_id
+  resource_object_id  = azuread_service_principal.this.object_id
+}
+
+resource "azuread_app_role_assignment" "user" {
+  app_role_id         = azuread_service_principal.this.app_role_ids["Joshua.Something.Else"]
+  principal_object_id = azuread_user.this.id
   resource_object_id  = azuread_service_principal.this.object_id
 }
 
