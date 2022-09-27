@@ -58,6 +58,7 @@ resource "azuread_application" "this" {
   }
 
   web {
+    redirect_uris = ["https://mitokentest.com/"]
     implicit_grant {
       access_token_issuance_enabled = true
       id_token_issuance_enabled = true
