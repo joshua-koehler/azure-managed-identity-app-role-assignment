@@ -57,6 +57,13 @@ resource "azuread_application" "this" {
     value                = "Joshua.Something.Else"
   }
 
+  web {
+    implicit_grant {
+      access_token_issuance_enabled = true
+      id_token_issuance_enabled = true
+    }
+  }
+
   feature_tags {
     enterprise = true
     gallery    = true
@@ -76,6 +83,11 @@ resource "azuread_service_principal" "this" {
 
 resource "azuread_service_principal_password" "confidential" {
   service_principal_id = azuread_service_principal.this.object_id
+}
+
+output "client_secret" {
+  value = azuread_service_principal_password.confidential.value
+  sensitive = true
 }
 
 resource "azuread_user" "this" {
